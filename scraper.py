@@ -16,8 +16,8 @@ cookies_file = "twitter_cookies.json"
 homeFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfbo4')]//div[contains(@role,'presentation')][1]"
 followFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfbo4')]//div[contains(@role,'presentation')][2]"
 enterNumInput = "//input[@data-testid='ocfEnterTextTextInput']"
-avatarsImg = "//article//div[contains(@data-testid,'UserAvatar-Container')]//img"
 userName = "//article//div[contains(@data-testid,'User-Name')]//a[@tabindex]//span"
+videoLink = "//article//div[contains(@data-testid,'videoComponent')]//video"
 
 
 def login_save_cookies():
@@ -93,17 +93,8 @@ match option_feed.upper():
 
 time.sleep(5)
 
-avatars = driver.find_elements(By.XPATH, avatarsImg)
 userNames = driver.find_elements(By.XPATH, userName)
-avatar_sources = []
 userNames_text = []
-
-for avatar in avatars:
-    src = avatar.get_attribute('src')
-    avatar_sources.append(src)
-
-for source in avatar_sources:
-    print(source)
 
 for username in userNames:
     name = username.text
@@ -111,6 +102,5 @@ for username in userNames:
 
 for username in userNames_text:
     print(username)
-
 
 driver.save_screenshot("screenshot.png")
