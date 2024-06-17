@@ -17,7 +17,10 @@ homeFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfb
 followFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfbo4')]//div[contains(@role,'presentation')][2]"
 enterNumInput = "//input[@data-testid='ocfEnterTextTextInput']"
 userName = "//article//div[contains(@data-testid,'User-Name')]//a[@tabindex]//span"
-videoLink = "//article//div[contains(@data-testid,'videoComponent')]//video"
+bodyTextUser = "//div[contains(@dir,'auto') and not(ancestor::div[@aria-labelledby])]/span"
+videoLink = "//div[contains(@data-testid,'videoComponent')]//video"
+imgLink = "//div[contains(@data-testid,'tweetPhoto')]//img"
+articlesSection = "//article"
 
 
 def login_save_cookies():
@@ -30,7 +33,7 @@ def login_save_cookies():
     email = input("Enter your email: ")
     username.send_keys(email)
     buttonNext.click()
-    time.sleep(5)
+    time.sleep(3)
 
     if element_exists(enterNumInput):
         numberInput = driver.find_element(By.XPATH, '//input[@data-testid="ocfEnterTextTextInput"]')
@@ -38,7 +41,7 @@ def login_save_cookies():
         number = input("Enter your phone number: ")
         numberInput.send_keys(number)
         nextButton.click()
-        time.sleep(5)
+        time.sleep(3)
 
     password = driver.find_element(By.XPATH, "//input[@name='password']")
     buttonLogin = driver.find_element(By.XPATH, "//button[contains(@data-testid,'Login')]")
@@ -77,30 +80,43 @@ def element_exists(element):
         return False
 
 
-option_feed = input("Enter the feed option (1-Four you / 2-Following): ")
-number_tweets = input("Enter the number of tweets to scrape: ")
+def select_option_feed(option):
+    match option.upper():
+        case 'FOUR YOU' | '1':
+            feed = driver.find_element(By.XPATH, homeFeed)
+            feed.click()
+
+        case 'FOLLOWING' | '2':
+            feed = driver.find_element(By.XPATH, followFeed)
+            feed.click()
+
+    time.sleep(5)
+
+
+def generate_list(xpath):
+    group = []
+    elements = driver.find_elements(By.XPATH, xpath)
+    for element in elements:
+        if xpath == 'userName' or xpath == 'bodyTextUser':
+            group.append(element.text)
+        elif 'imgLink' in xpath:
+            group.append(element.get_attribute('src'))
+        elif 'videoLink' in xpath:
+            group.append(element.get_attribute('poster'))
+        else:
+            group.append(None)
+
+    return group
 
 login_save_cookies()
 
-match option_feed.upper():
-    case 'FOUR YOU' | '1':
-        feed = driver.find_element(By.XPATH, homeFeed)
-        feed.click()
+option_feed = input("Enter the feed option (1-Four you / 2-Following): ")
+number_tweets = input("Enter the number of tweets to scrape: ")
 
-    case 'FOLLOWING' | '2':
-        feed = driver.find_element(By.XPATH, followFeed)
-        feed.click()
+select_option_feed(option_feed)
 
-time.sleep(5)
+names = generate_list(userName)
+body = generate_list(bodyTextUser)
 
-userNames = driver.find_elements(By.XPATH, userName)
-userNames_text = []
-
-for username in userNames:
-    name = username.text
-    userNames_text.append(name)
-
-for username in userNames_text:
-    print(username)
-
-driver.save_screenshot("screenshot.png")
+print(names)
+print(body)
