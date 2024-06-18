@@ -16,11 +16,13 @@ cookies_file = "twitter_cookies.json"
 homeFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfbo4')]//div[contains(@role,'presentation')][1]"
 followFeed = "//div[contains(@data-testid,'primary')]//div[contains(@class,'r-aqfbo4')]//div[contains(@role,'presentation')][2]"
 enterNumInput = "//input[@data-testid='ocfEnterTextTextInput']"
-userName = "//article//div[contains(@data-testid,'User-Name')]//a[@tabindex]//span"
-bodyTextUser = "//div[contains(@dir,'auto') and not(ancestor::div[@aria-labelledby])]/span"
-videoLink = "//div[contains(@data-testid,'videoComponent')]//video"
-imgLink = "//div[contains(@data-testid,'tweetPhoto')]//img"
+userName = ".//div[contains(@data-testid,'User-Name')]//a[@tabindex]//span"
+bodyTextUser = ".//div[contains(@dir,'auto') and not(ancestor::div[@aria-labelledby])]/span"
+videoLink = ".//div[contains(@data-testid,'videoComponent')]//video"
+imgLink = ".//div[contains(@data-testid,'tweetPhoto')]//img"
+externalLink = ".//div[contains(@data-testid,'card.wrapper')]//a"
 articlesSection = "//article"
+skipElementXpath = ".//*[@id='react-root']/div/div/div[2]/main/div/div/div/div[1]/div/div[5]/section/div/div/div[3]/div/div/div/article/div/div/div[2]/div[2]/div[1]/div/div[2]"
 
 
 def login_save_cookies():
@@ -93,20 +95,43 @@ def select_option_feed(option):
     time.sleep(5)
 
 
-def generate_list(xpath):
-    group = []
-    elements = driver.find_elements(By.XPATH, xpath)
-    for element in elements:
-        if xpath == 'userName' or xpath == 'bodyTextUser':
-            group.append(element.text)
-        elif 'imgLink' in xpath:
-            group.append(element.get_attribute('src'))
-        elif 'videoLink' in xpath:
-            group.append(element.get_attribute('poster'))
-        else:
-            group.append(None)
+def generate_tweets():
+    articles = driver.find_elements(By.XPATH, articlesSection)
+    tweets = []
 
-    return group
+    for article in articles:
+        try:
+            if article.find_element(By.XPATH, skipElementXpath):
+                continue
+        except NoSuchElementException:
+            tweet = {}
+            try:
+                name_element = article.find_element(By.XPATH, userName)
+                tweet['name'] = name_element.text
+            except NoSuchElementException:
+                tweet['name'] = None
+
+            try:
+                text_element = article.find_element(By.XPATH, bodyTextUser)
+                tweet['text'] = text_element.text
+            except NoSuchElementException:
+                tweet['text'] = None
+
+            try:
+                img_element = article.find_element(By.XPATH, imgLink)
+                tweet['img'] = img_element.get_attribute('src')
+            except NoSuchElementException:
+                tweet['img'] = None
+
+            try:
+                video_element = article.find_element(By.XPATH, videoLink)
+                tweet['video'] = video_element.get_attribute('src')
+            except NoSuchElementException:
+                tweet['video'] = None
+
+            tweets.append(tweet)
+
+    return tweets
 
 login_save_cookies()
 
@@ -115,8 +140,11 @@ number_tweets = input("Enter the number of tweets to scrape: ")
 
 select_option_feed(option_feed)
 
-names = generate_list(userName)
-body = generate_list(bodyTextUser)
+tweets = generate_tweets()
 
-print(names)
-print(body)
+# Exportar la lista de tweets a un archivo JSON
+with open('tweets_data.json', 'w') as json_file:
+    json.dump(tweets, json_file, indent=4)
+
+print("Data saved to tweets_data.json")
+
