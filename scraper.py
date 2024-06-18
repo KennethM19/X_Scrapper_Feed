@@ -20,10 +20,8 @@ userName = ".//div[contains(@data-testid,'User-Name')]//a[@tabindex]//span"
 bodyTextUser = ".//div[contains(@dir,'auto') and not(ancestor::div[@aria-labelledby])]/span"
 videoLink = ".//div[contains(@data-testid,'videoComponent')]//video"
 imgLink = ".//div[contains(@data-testid,'tweetPhoto')]//img"
-externalLink = ".//div[contains(@data-testid,'card.wrapper')]//a"
 articlesSection = "//article"
-skipElementXpath = ".//*[@id='react-root']/div/div/div[2]/main/div/div/div/div[1]/div/div[5]/section/div/div/div[3]/div/div/div/article/div/div/div[2]/div[2]/div[1]/div/div[2]"
-
+skipElementXpath = "//*[@id='react-root']/div/div/div[2]/main/div/div/div/div[1]/div/div[5]/section/div/div/div[3]/div/div/div/article/div/div/div[2]/div[2]/div[1]/div/div[2]"
 
 def login_save_cookies():
     driver.get("https://twitter.com/login")
@@ -95,56 +93,62 @@ def select_option_feed(option):
     time.sleep(5)
 
 
-def generate_tweets():
-    articles = driver.find_elements(By.XPATH, articlesSection)
+def generate_tweets(number_tweets):
     tweets = []
+    while len(tweets) < number_tweets:
+        articles = driver.find_elements(By.XPATH, articlesSection)
 
-    for article in articles:
-        try:
-            if article.find_element(By.XPATH, skipElementXpath):
-                continue
-        except NoSuchElementException:
-            tweet = {}
-            try:
-                name_element = article.find_element(By.XPATH, userName)
-                tweet['name'] = name_element.text
-            except NoSuchElementException:
-                tweet['name'] = None
+        for article in articles:
+            if len(tweets) >= number_tweets:
+                break
 
             try:
-                text_element = article.find_element(By.XPATH, bodyTextUser)
-                tweet['text'] = text_element.text
+                if article.find_element(By.XPATH, skipElementXpath):
+                    continue
             except NoSuchElementException:
-                tweet['text'] = None
+                tweet = {}
+                try:
+                    name_element = article.find_element(By.XPATH, userName)
+                    tweet['name'] = name_element.text
+                except NoSuchElementException:
+                    tweet['name'] = None
 
-            try:
-                img_element = article.find_element(By.XPATH, imgLink)
-                tweet['img'] = img_element.get_attribute('src')
-            except NoSuchElementException:
-                tweet['img'] = None
+                try:
+                    text_element = article.find_element(By.XPATH, bodyTextUser)
+                    tweet['text'] = text_element.text
+                except NoSuchElementException:
+                    tweet['text'] = None
 
-            try:
-                video_element = article.find_element(By.XPATH, videoLink)
-                tweet['video'] = video_element.get_attribute('src')
-            except NoSuchElementException:
-                tweet['video'] = None
+                try:
+                    img_element = article.find_element(By.XPATH, imgLink)
+                    tweet['img'] = img_element.get_attribute('src')
+                except NoSuchElementException:
+                    tweet['img'] = None
 
-            tweets.append(tweet)
+                try:
+                    video_element = article.find_element(By.XPATH, videoLink)
+                    tweet['video'] = video_element.get_attribute('src')
+                except NoSuchElementException:
+                    tweet['video'] = None
+
+                tweets.append(tweet)
+
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(3)
 
     return tweets
 
 login_save_cookies()
 
 option_feed = input("Enter the feed option (1-Four you / 2-Following): ")
-number_tweets = input("Enter the number of tweets to scrape: ")
+number_tweets = int(input("Enter the number of tweets to scrape: "))
 
 select_option_feed(option_feed)
 
-tweets = generate_tweets()
+tweets = generate_tweets(number_tweets)
 
-# Exportar la lista de tweets a un archivo JSON
-with open('tweets_data.json', 'w') as json_file:
-    json.dump(tweets, json_file, indent=4)
+# Exportar la lista de tweets a un archivo JSON con codificación UTF-8
+with open('tweets_data.json', 'w', encoding='utf-8') as json_file:
+    json.dump(tweets, json_file, indent=4, ensure_ascii=False)
 
 print("Data saved to tweets_data.json")
-
